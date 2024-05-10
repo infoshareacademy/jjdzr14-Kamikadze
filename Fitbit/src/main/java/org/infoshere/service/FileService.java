@@ -1,4 +1,5 @@
 package org.infoshere.service;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -11,7 +12,6 @@ public class FileService {
     String fileName;
 
     static final String RESOURCES_PATH = "Fitbit/src/main/java/org/infoshere/resources";
-
 
 
     public void writeToFile(String fileName, String content) {

@@ -9,6 +9,7 @@ public class MenuService {
     public void displayMenu() {
         System.out.println("1. List of available trainers");
         System.out.println("2. Activity list");
+        System.out.println("3. Add ActivityList");
         System.out.println("3. Exit");
     }
 
@@ -22,19 +23,27 @@ public class MenuService {
             sc.next();
             return getChoice();
         }
-
     }
 
-    public static void trainersList() {
+    public static void printHeader(String header) {
         System.out.println("------------------------------------");
-        System.out.println("List of available trainers");
+        System.out.println("List of available " + header);
         System.out.println("------------------------------------");
     }
 
-    public static void activityList() {
-        System.out.println("------------------------------------");
-        System.out.println("List of available Activity");
-        System.out.println("------------------------------------");
+
+    public static void contentList(String choice) throws IOException {
+        FileService fileService = new FileService();
+        if (choice.equals("Trainers")) {
+            printHeader(choice);
+            fileService.readFromFile("TrainersList");
+            System.out.println("------------------------------------");
+        } else if (choice.equals("ActivityList")) {
+            printHeader(choice);
+            fileService.readFromFile("ActivityList");
+            System.out.println("------------------------------------");
+        }
+
     }
 
     public static void exit() {
@@ -42,5 +51,6 @@ public class MenuService {
         System.out.println("Exit");
         System.out.println("------------------------------------");
     }
+
 
 }
