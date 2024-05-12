@@ -6,11 +6,23 @@ import java.util.Scanner;
 
 public class MenuService {
 
-    public void displayMenu() {
-        System.out.println("1. List of available Coach");
-        System.out.println("2. Activity list");
-        System.out.println("3. Exit");
+    public void displayMenuCoach() {
+        System.out.println("1. Activity list");
+        System.out.println("2. Add activity ");
+        System.out.println("3. Delete activity");
+        System.out.println("4. Edit activity");
+        System.out.println("5. Exit");
     }
+
+    public void displayMenuClients() {
+        System.out.println("1. List activity");
+        System.out.println("2. Sign up for classes");
+        System.out.println("3. Delete activity");
+        System.out.println("4. Edit activity");
+        System.out.println("5. Exit");
+    }
+
+
 
     public int getChoice() {
         Scanner sc = new Scanner(System.in);
