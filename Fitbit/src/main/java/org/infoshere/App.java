@@ -17,6 +17,20 @@ public class App {
 
         int optionNumber;
 
+        /*
+            klasa Menu
+                print()
+                selectOption(int i)
+            klasa MainMenu extend Menu
+                print() {
+                   printMenu();
+                   switch() {
+                      case 1 -> printFunction1();
+
+            klasa Function1Menu() extends Menu
+                 print()
+         */
+
         do {
             menuService.displayMenu();
             optionNumber = menuService.getChoice();
@@ -27,11 +41,12 @@ public class App {
                 case 2:
                     menuService.contentList("ActivityList");
                     break;
-            }
-            if (optionNumber > 3) {
-                System.out.println("------------------------------------");
-                System.out.println("Off the scale. Please enter a valid number.");
-                System.out.println("------------------------------------");
+                default:
+                    if (optionNumber > 3) {
+                        System.out.println("------------------------------------");
+                        System.out.println("Off the scale. Please enter a valid number.");
+                        System.out.println("------------------------------------");
+                    }
             }
         }
         while (optionNumber != 3);
