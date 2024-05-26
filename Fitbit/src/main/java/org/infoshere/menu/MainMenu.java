@@ -21,6 +21,7 @@ public class MainMenu implements Menu {
         System.out.println("3. Activity list");
         System.out.println("4. Add activity list");
         System.out.println("5. BMI calculator");
+        System.out.println("5. x");
         System.out.println("6. Exit");
     }
 
@@ -44,7 +45,8 @@ public class MainMenu implements Menu {
             case 3 -> printFunction("activityList");
             case 4 -> printFunction("addActivityList");
             case 5 -> printFunction("BMI");
-            case 6 -> printFunction("exit");
+            case 6 -> printFunction("X");
+            case 7 -> printFunction("exit");
             default -> System.out.println("Invalid option.");
         }
     }
@@ -55,7 +57,7 @@ public class MainMenu implements Menu {
         do {
             choice = getChoice();
             selectOption(choice);
-        } while (choice != 6);
+        } while (choice != 7);
     }
 
     public int getChoice() {
@@ -76,6 +78,7 @@ public class MainMenu implements Menu {
     public void printFunction(String choice) throws IOException {
         FileService fileService = new FileService();
         BMICalculator bmiCalculator = new BMICalculator();
+        X x = new X();
         if (choice.equals("coachList")) {
             System.out.println("------------------------------------");
             printHeader(choice);
@@ -96,10 +99,15 @@ public class MainMenu implements Menu {
             printHeader(choice);
             newActivity();
             System.out.println("------------------------------------");
+        } else if (choice.equals("X")) {
+            System.out.println("------------------------------------");
+            printHeader(choice);
+
+            System.out.println("------------------------------------");
         } else if (choice.equals("BMI")) {
             System.out.println("------------------------------------");
             double weight = getValidationInputDouble(sc, "Enter your weight in kg:");
-            double height = getValidationInputDouble(sc, "Enter your height in cm (Example 1,75):");
+            double height = getValidationInputDouble(sc, "Enter your height in cm (Example 1.75):");
             double bmi = bmiCalculator.bmiCalculation(weight, height);
             System.out.println("Your BMI is: " + bmi);
             System.out.println("------------------------------------");
