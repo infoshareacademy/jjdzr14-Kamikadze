@@ -14,11 +14,11 @@ public class Coach {
         this.specialization = specialization;
     }
 
-    public String getName() {
+    public String getFirstName() {
         return firstName;
     }
 
-    public void setName(String name) {
+    public void setFirstName(String name) {
         this.firstName = name;
     }
 

@@ -21,7 +21,7 @@ public class CoachActivity {
         
         try {
             ObjectMapper ow = new ObjectMapper();
-            json = ow.writeValueAsString(coach);
+            json = ow.writerWithDefaultPrettyPrinter().writeValueAsString(coach);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

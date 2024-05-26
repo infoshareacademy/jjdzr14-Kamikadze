@@ -36,19 +36,19 @@ public class Activity {
     @Override
     public int hashCode() {return Objects.hash(nameActivity);}
 
-    public String getName() {
+    public String getNameActivity() {
         return nameActivity;
     }
 
-    public void setName(String name) {
+    public void setNameActivity(String name) {
         this.nameActivity = name;
     }
 
-    public DayOfTheWeek getTime() {
+    public DayOfTheWeek getDayOfTheWeek() {
         return dayOfTheWeek;
     }
 
-    public void setTime(DayOfTheWeek dayOfTheWeek) {this.dayOfTheWeek = dayOfTheWeek;
+    public void setDayOfTheWeek(DayOfTheWeek dayOfTheWeek) {this.dayOfTheWeek = dayOfTheWeek;
     }
 
     public void setTypeActivity(TypeActivity typeActivity) {

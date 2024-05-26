@@ -146,10 +146,10 @@ public class MainMenu implements Menu {
             System.out.print("Create new activity: ");
             String nameActivity = sc.nextLine();
 
-            System.out.print("Choose day of week: ");
+            System.out.print("Choose day of week, example: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday: ");
             String dayOfTheWeek = sc.nextLine();
 
-            System.out.print("Choose type of activity: ");
+            System.out.print("Choose type of activity, example: Endurance, Strength, Balance, Flexibility: ");
             String typeActivity = sc.nextLine();
 
             DayOfTheWeek day = null;
@@ -179,6 +179,7 @@ public class MainMenu implements Menu {
                     System.out.println("Invalid day of the week");
                     return;
             }
+            
 
             TypeActivity type = null;
             switch (typeActivity) {

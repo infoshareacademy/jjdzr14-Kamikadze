@@ -22,7 +22,7 @@ public class ActivityService {
         
         try {
             ObjectMapper ow = new ObjectMapper();
-            json = ow.writeValueAsString(activity);
+            json = ow.writerWithDefaultPrettyPrinter().writeValueAsString(activity);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
