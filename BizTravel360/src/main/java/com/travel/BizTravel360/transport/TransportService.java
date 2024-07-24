@@ -2,7 +2,6 @@ package com.travel.BizTravel360.transport;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.travel.BizTravel360.file.FileService;
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import jakarta.validation.*;
 import lombok.extern.slf4j.Slf4j;
@@ -10,13 +9,11 @@ import org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Slf4j
@@ -27,94 +24,114 @@ public class TransportService implements TransportRepository{
     private final FileService fileService;
     @Value("${transports.file.path}")
     private String transportFilePath;
-
+    
     private List<Transport> transports = new ArrayList<>();
-
+    
     public TransportService(FileService fileService, @Value("${transports.file.path}") String transportFilePath) {
         this.fileService = fileService;
         this.transportFilePath = transportFilePath;
     }
     
-    @PostConstruct
-    public void init() {
-        try {
-            if (Files.exists(Paths.get(transportFilePath))){
-                this.transports = fileService.readFromFile(new TypeReference<List<Transport>>() {}, transportFilePath);
-                
-                log.info("Initialized transport list with {} transports.", transports.size());
-                for (Transport transport : transports) {
-                    formatTransportDates(transport);
-                    log.info("Transport: {} ", transport);
-                }
-            }
-        } catch (IOException e) {
-            log.error("Failed to read transports form JSON file: {}, message: {}", transportFilePath, e.getMessage());
-        }
-    }
-    
     @Override
-    public Transport saveTransport(Transport transport) throws IOException {
+    public void saveTransport(Transport transport) throws IOException {
         try {
-            formatTransportDates(transport);
             trimTransport(transport);
             validateTransport(transport);
             
-            transport.setTransportId((UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE));
-            transports.add(transport);
-            fileService.writerToFile(transports, transportFilePath);
-            formatTransportDates(transport);
-            log.info("Transport {}", transport);
-            return transport;
-        }catch (IOException e){
-            log.error("Failed to save transport {}", transport);
+            transport.setTransportId(UUID.randomUUID().getMostSignificantBits() & Long.MAX_VALUE);
+            List<Transport> existingTransports = fetchTransportList();
+            existingTransports.add(transport);
+            
+            fileService.writerToFile(existingTransports, transportFilePath);
+            
+            String successMessage = String.format("Transport %s (%s) successfully saved. Departure: %s, Arrival: %s.",
+                    transport.getTypeTransport(),
+                    transport.getTransportIdentifier(),
+                    transport.getDeparture(),
+                    transport.getArrival());
+            log.info(successMessage);
+        } catch (IOException e) {
+            log.error("Failed to save transport {}", transport, e);
             throw new RuntimeException("Failed to save transport: " + transport);
         }
     }
     
     @Override
-    public List<Transport> fetchTransportList() {
-        List<Transport> reverseTransports = new ArrayList<>(this.transports);
-        Collections.reverse(reverseTransports);
-        return new ArrayList<>(reverseTransports);
+    public List<Transport> fetchTransportList() throws IOException {
+        if (Files.exists(Paths.get(transportFilePath))) {
+            this.transports = fileService.readFromFile(transportFilePath, new TypeReference<List<Transport>>() {});
+            Collections.reverse(transports);
+            return transports;
+        }
+        return new ArrayList<>();
     }
     
     @Override
     public Transport updateTransport(Transport updateTransport, Long transportId) throws IOException {
-        Transport transportToUpdate = findTransportById(transportId);
-        trimTransport(updateTransport);
+        this.transports = fetchTransportList();
         
-        if (transportToUpdate != null) {
-            transportToUpdate.setTypeTransport(updateTransport.getTypeTransport());
-            transportToUpdate.setTransportIdentifier(updateTransport.getTransportIdentifier());
-            transportToUpdate.setDeparture(updateTransport.getDeparture());
-            transportToUpdate.setDepartureDateTime(updateTransport.getDepartureDateTime());
-            transportToUpdate.setArrival(updateTransport.getArrival());
-            transportToUpdate.setArrivalDateTime(updateTransport.getArrivalDateTime());
-            transportToUpdate.setCount(updateTransport.getCount());
-            return transportToUpdate;
-        }else {
+        boolean updated = false;
+        for (int i = 0; i < transports.size(); i++) {
+            if (Objects.equals(transports.get(i).getTransportId(), transportId)) {
+                transports.set(i, updateTransport);
+                updated = true;
+                break;
+            }
+        }
+        
+        if (updated) {
+            fileService.writerToFile(transports, transportFilePath);
+            log.info("Updated transport with ID: {}", transportId);
+            
+            String successMessage = String.format("Transport %s (%s) successfully updated. Departure: %s, Arrival: %s.",
+                    updateTransport.getTypeTransport(),
+                    updateTransport.getTransportIdentifier(),
+                    updateTransport.getDeparture(),
+                    updateTransport.getArrival());
+            log.info(successMessage);
+            return updateTransport;
+        } else {
+            log.warn("Transport with ID {} not found", transportId);
             return null;
         }
     }
     
     @Override
     public void deleteTransportById(Long transportId) throws IOException {
-        transports.removeIf(t -> Objects.equals(t.getTransportId(), transportId));
-        persistTransport();
+        List<Transport> transports = fetchTransportList();
+        List<Transport> updatedTransports = new ArrayList<>();
+        boolean found = false;
+        
+        for (Transport transport : transports) {
+            if (Objects.equals(transport.getTransportId(), transportId)) {
+                found = true; // Flag to indicate if the transport was found and removed
+            } else {
+                updatedTransports.add(transport);
+            }
+        }
+        
+        if (found) {
+            // Write the updated list back to the file
+            fileService.writerToFile(updatedTransports, transportFilePath);
+            log.info("Deleted transport with id {}", transportId);
+        } else {
+            log.warn("Transport with id {} not found for deletion", transportId);
+        }
     }
     
     @Override
     public Transport findTransportById(Long transportId) throws IOException {
+        this.transports = fileService.readFromFile(transportFilePath, new TypeReference<List<Transport>>() {});
         return transports.stream()
                 .filter(t -> Objects.equals(t.getTransportId(), transportId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No transport with id " + transportId));
+                .findFirst().
+                orElseThrow(() -> new FileNotFoundException("No transport with id " + transportId));
     }
     
     private void validateTransport(Transport transport) {
         ValidatorFactory factory = Validation.byDefaultProvider()
                 .configure()
-                .messageInterpolator((MessageInterpolator) new ParameterMessageInterpolator())
+                .messageInterpolator(new ParameterMessageInterpolator())
                 .buildValidatorFactory();
         Validator validator = factory.getValidator();
         Set<ConstraintViolation<Transport>> constraintViolations = validator.validate(transport);
@@ -125,36 +142,9 @@ public class TransportService implements TransportRepository{
         }
     }
     
-    private void persistTransport(){
-        try {
-            fileService.writerToFile(transports, transportFilePath);
-        }catch (FileSystemException e){
-            log.error("Failed to persist JSON file system issue: {}, message: {}", transportFilePath, e.getMessage());
-        } catch (IOException e) {
-            log.error("Failed to persist transport JSON file: {}, message: {}", transportFilePath, e.getMessage());
-        }
-    }
-    
     private void trimTransport(Transport transport) {
         transport.setTransportIdentifier(transport.getTransportIdentifier().trim());
         transport.setDeparture(transport.getDeparture().trim());
         transport.setArrival(transport.getArrival().trim());
-    }
-    
-    private void formatTransportDates(Transport transport) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd [HH:mm]");
-        try {
-            LocalDateTime departureDateTime = LocalDateTime.parse(transport.getDepartureDateTime().format(formatter), formatter);
-            transport.setDepartureDateTime(departureDateTime);
-            
-            LocalDateTime arrivalDateTime = LocalDateTime.parse(transport.getArrivalDateTime().format(formatter), formatter);
-            transport.setArrivalDateTime(arrivalDateTime);
-            
-            if (departureDateTime.isAfter(arrivalDateTime)) {
-                throw new IllegalArgumentException("Departure date and time must be before arrival date and time.");
-            }
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid date format. Please use 'yyyy-MM-dd [HH:mm]'.", e);
-        }
     }
 }
